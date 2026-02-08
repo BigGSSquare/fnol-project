@@ -7,7 +7,7 @@ export const FIELD_MAPPING = {
   dateOfLoss: ["DATE OF LOSS", "Text1"],
   // description not available to parse with pdf-lib, therefore getting that text from another similar text field in the form.
   description: [
-    "DESCRIBE LOCATION OF LOSS IF NOT AT SPECIFIC STREET ADDRESS",
+    "DESCRIPTION OF ACCIDENT ACORD 101 Additional Remarks Schedule may be attached if more space is required",
     // use these for alternate values for filling in the fields.
     // "Text45",
     // "Text98",

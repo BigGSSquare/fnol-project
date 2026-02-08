@@ -1,4 +1,8 @@
 export const FNOL_SCHEMA = {
+  claimType: {
+    required: true,
+    type: "string",
+  },
   policyNumber: {
     required: true,
     type: "string",
