@@ -16,7 +16,9 @@ npm install
 2 -->Update the file path in index.js
 
 inputPath = "./samples/your-fnol-document.pdf";
-RunBashnode index.js
+then type 
+
+node index.js
 (or 2 files filled partially already given ACORD-Automobile... and sample.txt. copy the relative path and paste in the mentioned field.)
 
 ### PROJECT DESCRIPTION
