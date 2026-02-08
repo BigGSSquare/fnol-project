@@ -1,33 +1,48 @@
-import fs from "fs";
-import { PDFDocument } from "pdf-lib";
+import path from "path";
+
+import { loadPDF } from "./document/loadDocument.js";
 import { extractFields } from "./extract/extractFields.js";
 import { FIELD_MAPPING } from "./extract/fieldMapping.js";
-import { dumpAllFields } from "./dumpFields.js";
-import { routeClaim } from "./routing/routeClaim.js";
+
+import { classifyClaimType } from "./classify/classifyClaimType.js";
 import { validateFNOL } from "./validate/validateFields.js";
 import { FNOL_SCHEMA } from "./schema/fnolSchema.js";
-import { loadPDF } from "./document/loadDocument.js";
-import { classifyClaimType } from "./classify/classifyClaimType.js";
+import { routeClaim } from "./routing/routeClaim.js";
+import { loadTXT } from "./load/loadTXT.js";
+import { parseTXT } from "./parse/parseTXT.js";
+import { normalizeTXT } from "./normalize/normalizeTXT.js";
 async function main() {
-  const pdfPath = "./samples/ACORD-Automobile-Loss-Notice-12.05.16 (1) (1).pdf";
+  const inputPath = "./samples/sample.txt";
 
-  // Step 1: Load PDF
-  const pdfDoc = await loadPDF(pdfPath);
+  const extension = path.extname(inputPath).toLowerCase();
 
-  // Step 2: Access form (best-effort, may be synthesized)
-  const form = pdfDoc.getForm();
+  let extractedData;
+  // loading the document
+  if (extension === ".pdf") {
+    const pdfDoc = await loadPDF(inputPath);
 
-  // Step 3: Extract fields into FNOL schema
-  const extractedData = extractFields(form, FIELD_MAPPING);
+    //form access(to the maximum extent possible.)
+    const form = pdfDoc.getForm();
+
+    extractedData = extractFields(form, FIELD_MAPPING);
+  } else if (extension === ".txt") {
+    const content = loadTXT(inputPath);
+    const parsed = parseTXT(content);
+    extractedData = normalizeTXT(parsed);
+  } else {
+    throw new Error(`Unsupported file type: ${extension}`);
+  }
+
+  // classification using the description from the form.
   extractedData.claimType = classifyClaimType(extractedData.description);
 
-  // Step 4: Validate extracted data
+  // validation
   const validationResult = validateFNOL(extractedData, FNOL_SCHEMA);
 
-  // Step 5: Route claim
+  //routing
   const routingResult = routeClaim(extractedData, validationResult);
 
-  // Step 6: Final agent output
+  // output object
   const agentOutput = {
     extractedFields: extractedData,
     missingFields: validationResult.missingFields,
