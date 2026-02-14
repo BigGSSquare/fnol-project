@@ -21,6 +21,26 @@ then type
 node index.js
 (or 2 files filled partially already given ACORD-Automobile... and sample.txt. copy the relative path and paste in the mentioned field.)
 
+##My Approach to the problem statment.
+
+One of the most challenging problems I worked on was parsing FNOL (First Notice of Loss) PDF documents without using AI-based extraction, since token costs made AI solutions expensive at scale.
+
+Initially, I approached it as a simple text extraction problem. I used a library called pdf-parse and built a rule-based parser to extract key-value pairs like policy number, insured name, and date of loss. My assumption was that the filled-in values would appear alongside the labels in the extracted text.
+
+However, when testing, I realized my parser was only detecting the labels, not the actual user inputs. That forced me to step back and inspect how the PDF was structured internally instead of treating it like a plain text document.
+
+After investigating the PDF structure, I discovered that many of the FNOL files were built using AcroForms. In these PDFs, the labels are part of the visible text layer, but the user-entered values are stored separately inside the document’s AcroForm dictionary, which is attached to the PDF catalog. That explained why text extraction alone wasn’t enough.
+
+To address this, I changed my approach. I switched from pdf-parse to pdf-lib, which allows programmatic access to form fields. I iterated through the AcroForm fields, retrieved field names, and extracted their stored values. This worked for structured form-based PDFs and gave me measurable progress.
+
+But during further testing, I found inconsistencies. Some PDFs were flattened (where form data was converted into static text), and some were scanned image-based documents with no text layer at all. Relying solely on AcroForm parsing was not reliable across all inputs.
+
+At that point, I redesigned the solution into a layered parsing pipeline:
+
+1. First, check if the PDF contains AcroForm fields and extract values directly.
+2. If no usable form fields exist, attempt rule-based text parsing on the text layer.
+3. If the document is scanned or lacks extractable text, apply OCR as a fallback.
+
 ### PROJECT DESCRIPTION
 
 ## Overview
@@ -104,25 +124,7 @@ It automates the obvious, safely escalates the uncertain, and never pretends to 
 Perfect for environments where explainability, compliance, and zero-trust data handling matter more than raw throughput.
 ```
 
-##My Approach to the problem statment.
 
-One of the most challenging problems I worked on was parsing FNOL (First Notice of Loss) PDF documents without using AI-based extraction, since token costs made AI solutions expensive at scale.
-
-Initially, I approached it as a simple text extraction problem. I used a library called pdf-parse and built a rule-based parser to extract key-value pairs like policy number, insured name, and date of loss. My assumption was that the filled-in values would appear alongside the labels in the extracted text.
-
-However, when testing, I realized my parser was only detecting the labels, not the actual user inputs. That forced me to step back and inspect how the PDF was structured internally instead of treating it like a plain text document.
-
-After investigating the PDF structure, I discovered that many of the FNOL files were built using AcroForms. In these PDFs, the labels are part of the visible text layer, but the user-entered values are stored separately inside the document’s AcroForm dictionary, which is attached to the PDF catalog. That explained why text extraction alone wasn’t enough.
-
-To address this, I changed my approach. I switched from pdf-parse to pdf-lib, which allows programmatic access to form fields. I iterated through the AcroForm fields, retrieved field names, and extracted their stored values. This worked for structured form-based PDFs and gave me measurable progress.
-
-But during further testing, I found inconsistencies. Some PDFs were flattened (where form data was converted into static text), and some were scanned image-based documents with no text layer at all. Relying solely on AcroForm parsing was not reliable across all inputs.
-
-At that point, I redesigned the solution into a layered parsing pipeline:
-
-1. First, check if the PDF contains AcroForm fields and extract values directly.
-2. If no usable form fields exist, attempt rule-based text parsing on the text layer.
-3. If the document is scanned or lacks extractable text, apply OCR as a fallback.
 
 This multi-step strategy improved reliability across different document formats while still avoiding unnecessary AI usage.
 
